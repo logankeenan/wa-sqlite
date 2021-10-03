@@ -11,6 +11,7 @@ import { MemoryAsyncVFS } from '../src/examples/MemoryAsyncVFS.js';
 import { IndexedDbVFS } from '../src/examples/IndexedDbVFS.js';
 import { ArrayModule } from '../src/examples/ArrayModule.js';
 import { ArrayAsyncModule } from '../src/examples/ArrayAsyncModule.js';
+import { HttpVFS } from '../src/examples/HttpVFS.js';
 
 import { tag } from '../src/examples/tag.js';
 import GOOG from '../test/GOOG.js';
@@ -51,6 +52,7 @@ SELECT * FROM goog LIMIT 5;
   sqlite3a.vfs_register(new MemoryVFS());
   sqlite3a.vfs_register(new MemoryAsyncVFS());
   sqlite3a.vfs_register(new IndexedDbVFS());
+  sqlite3a.vfs_register(new HttpVFS());
 
   // Create the set of databases with respective runtime and VFS. For
   // each database we generate a template tag function that is used
@@ -79,6 +81,7 @@ SELECT * FROM goog LIMIT 5;
   await addTag('mem', sqlite3s, 'memory');
   await addTag('mem-async', sqlite3a, 'memory-async');
   await addTag('idb', sqlite3a, 'idb');
+  await addTag('httpvfs', sqlite3a, 'httpvfs');
 
   // The selector widget determines the active template tag function.
   // It is also attached to the window so SQL queries can be easily
