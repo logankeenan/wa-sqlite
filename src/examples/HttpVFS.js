@@ -35,35 +35,37 @@ export class HttpVFS extends VFS.Base {
   }
 
   xRead(fileId, pData, iOffset) {
-    console.log("xRead");
-    console.log("fileId", fileId);
-    console.log("iOffset", iOffset);
-    console.log("pData.size", pData.size);
-    let headers = new Headers();
-    headers.append("Range", `bytes=${iOffset}-${iOffset + pData.size - 1}`);
+    return this.handleAsync(async () => {
+      console.log("xRead");
+      console.log("fileId", fileId);
+      console.log("iOffset", iOffset);
+      console.log("pData.size", pData.size);
+      let headers = new Headers();
+      headers.append("Range", `bytes=${iOffset}-${iOffset + pData.size - 1}`);
 
-    return new Promise((resolve, reject) => {
-      fetch("/demo/name-tbd.sqlite", {
+
+      // return new Promise((resolve, reject) => {
+      const response = await fetch("/demo/name-tbd.sqlite", {
         method: "GET",
         headers: headers
-      }).then((response) => {
-        const reader = response.body.getReader();
-        let offset = 0;
+      });
+      const reader = response.body.getReader();
+      let offset = 0;
+      let done = false;
 
-        reader.read().then(function processText({done, value}) {
-          if (done) {
-            resolve(VFS.SQLITE_OK)
-            return;
-          }
+      while (done === false) {
+        let result = await reader.read();
+        done = result.done
+        if (!done) {
+          pData.value.subarray(offset).set(result.value)
+          offset = offset + result.value.length;
+        }
+      }
 
-          pData.value.subarray(offset).set(value)
-          offset = offset + value.length;
-
-          return reader.read().then(processText);
-        }).catch(error);
-        // }).catch(error);
-      }).catch(error);
-    })
+      console.log("here");
+      console.log("pData.value", pData.value);
+      return VFS.SQLITE_OK;
+    });
   }
 
   xFileSize(fileId, pSize64) {
@@ -71,19 +73,17 @@ export class HttpVFS extends VFS.Base {
     console.log("fileId", fileId);
     console.log("pSize64", pSize64);
 
-    return new Promise((resolve, reject) => {
-      fetch("/demo/name-tbd.sqlite", {
+    return this.handleAsync(async () => {
+      const response = await fetch("/demo/name-tbd.sqlite", {
         method: "HEAD",
-      }).then((response) => {
-        console.log("response", response);
-        let headers = response.headers;
+      })
+      console.log("response", response);
+      let headers = response.headers;
 
-        console.log("headers", headers);
-        let fileSize = headers.get("content-length");
-        pSize64.set(fileSize);
-        resolve(VFS.SQLITE_OK)
-
-      });
+      console.log("headers", headers);
+      let fileSize = headers.get("content-length");
+      pSize64.set(fileSize);
+      return VFS.SQLITE_OK
     });
   }
 
